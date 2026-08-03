@@ -51,7 +51,7 @@ def main() -> None:
     logger.info(f"Received folder argument: {folder_path}")
     logger.info(f"Dry-run mode: {dry_run}")
 
-    print("Smart File Organizer Pro v1.3.0")
+    print("Smart File Organizer Pro v1.4.0")
     print("--------------------------------")
 
     # Load configuration
@@ -63,7 +63,7 @@ def main() -> None:
         print(f"Configuration error: {error}")
         return
 
-    # --- NEW: ScannerEngine pre-scan ---
+    # --- ScannerEngine pre-scan ---
     try:
         logger.info("Starting pre-scan analysis")
         scanner = ScannerEngine(config)
@@ -96,27 +96,35 @@ def main() -> None:
 
     logger.info(f"Post-organization statistics: {stats}")
 
-    # --- NEW: Report generation with scan_data ---
+    # --- Report generation (TXT + JSON) ---
     try:
-        logger.info("Generating report")
+        logger.info("Generating reports (TXT + JSON)")
 
         report = ReportData(
             source_folder=str(folder_path),
             stats=stats,
-            scan_data=scan_data  # NEW: scanner results included
+            scan_data=scan_data
         )
 
-        text_report = ReportFormatter.to_text(report)
-
         writer = ReportWriter(output_dir=PROJECT_ROOT / "reports")
-        saved_path = writer.save_text_report(text_report)
 
-        logger.info(f"Report generated successfully: {saved_path}")
-        print(f"\nReport saved to: {saved_path}")
+        # TXT report
+        text_report = ReportFormatter.to_text(report)
+        saved_txt = writer.save_text_report(text_report)
+
+        # JSON report
+        json_report = ReportFormatter.to_json(report)
+        saved_json = writer.save_json_report(json_report)
+
+        logger.info(f"TXT report saved: {saved_txt}")
+        logger.info(f"JSON report saved: {saved_json}")
+
+        print(f"\nTXT report saved to: {saved_txt}")
+        print(f"JSON report saved to: {saved_json}")
 
     except Exception as error:
-        logger.error(f"Failed to generate report: {error}")
-        print(f"Failed to generate report: {error}")
+        logger.error(f"Failed to generate reports: {error}")
+        print(f"Failed to generate reports: {error}")
 
     logger.info("Application finished")
 
