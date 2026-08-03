@@ -1,0 +1,32 @@
+{
+    "file_types": {
+        "images": [
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".bmp"
+        ],
+        "documents": [
+            ".pdf",
+            ".docx",
+            ".txt",
+            ".xlsx",
+            ".csv"
+        ],
+        "videos": [
+            ".mp4",
+            ".avi",
+            ".mov"
+        ],
+        "audio": [
+            ".mp3",
+            ".wav"
+        ],
+        "archives": [
+            ".zip",
+            ".rar",
+            ".7z"
+        ]
+    }
+}
