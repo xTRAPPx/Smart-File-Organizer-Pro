@@ -1,150 +1,226 @@
 # Smart File Organizer Pro
 
-Professional Python automation tool that organizes files automatically based on file type, reducing manual work and improving workflow efficiency.
+A modular Python automation tool for intelligent file organization, folder analysis, and report generation.
 
-## Overview
+The application scans folders, classifies files, organizes them into categories, and generates structured reports in multiple formats.
 
-Smart File Organizer Pro is a Python-based automation utility designed to organize files into structured folders automatically.
+The project is designed with a modular architecture to support future extensions, including dashboard and GUI integration.
 
-The application analyzes file extensions, creates category folders, safely moves files, prevents accidental overwriting, and provides a command-line interface for efficient usage.
-
-The project was built with a focus on clean architecture, maintainable code, and practical real-world automation.
+---
 
 ## Features
 
-* Automatic file organization by extension
-* Configurable file categories through JSON configuration
-* Safe file moving with duplicate name protection
-* Dry-run mode for previewing actions
-* Command-line interface (CLI)
-* File statistics after processing
-* Modular Python architecture
+### File Organization
 
-## Project Structure
+The application automatically organizes files based on their type.
 
-```text
+Supported categories:
+
+- Images
+- Documents
+- Videos
+- Audio files
+- Archives
+- Other files
+
+---
+
+## Reporting System
+
+The reporting system is built around a shared ReportData model.
+
+Supported output formats:
+
+- TXT reports
+- JSON reports
+- HTML dashboard reports
+
+The same data model is used for every format, ensuring consistency between outputs.
+
+---
+
+## HTML Dashboard
+
+Version 1.6.0 introduces a professional HTML dashboard.
+
+Features:
+
+- Embedded CSS styling
+- Statistics cards
+- Pre-scan analysis
+- Post-organization comparison
+- Category distribution tables
+- Human-readable file sizes
+- Large file overview
+
+The generated HTML report is completely standalone and can be opened directly in any browser.
+
+---
+
+## Architecture
+
+The project follows a modular structure:
+
 Smart-File-Organizer-Pro/
-
-├── config/
-│   └── config.json
 
 ├── src/
 │   ├── main.py
 │   ├── organizer.py
-│   └── config_loader.py
+│   ├── config_loader.py
+│   └── utils/
+│       ├── scanner.py
+│       ├── report.py
+│       └── logger.py
+
+├── config/
+│   └── config.json
+
+├── reports/
 
 └── README.md
-```
 
-## Technologies
+---
 
-* Python 3.14
-* pathlib
-* shutil
-* argparse
-* json
+## Core Components
+
+### ReportData
+
+Central data model containing:
+
+- source folder information
+- organization statistics
+- scanner results
+- timestamps
+
+### ReportFormatter
+
+Responsible for converting report data into:
+
+- TXT format
+- JSON format
+- HTML format
+
+### ReportWriter
+
+Handles saving generated reports to disk.
+
+Supported files:
+
+- .txt
+- .json
+- .html
+
+### ScannerEngine
+
+Analyzes folders before organization:
+
+- file count
+- total size
+- category distribution
+- large files
+
+---
 
 ## Installation
 
 Clone the repository:
 
-```bash
-git clone https://github.com/yourusername/Smart-File-Organizer-Pro.git
-```
+git clone https://github.com/xTRAPPx/Smart-File-Organizer-Pro.git
 
-Navigate into the project folder:
+Install requirements if available:
 
-```bash
-cd Smart-File-Organizer-Pro
-```
+pip install -r requirements.txt
+
+---
 
 ## Usage
 
-Run the application:
+Run:
 
-```bash
-python src/main.py --folder "PATH_TO_FOLDER"
-```
+python src/main.py --folder "path/to/folder"
 
-Example:
-
-```bash
-python src/main.py --folder "C:\Users\User\Desktop\Test_Files"
-```
-
-## Preview Mode
-
-Before moving files, you can test the operation safely:
-
-```bash
-python src/main.py --folder "PATH_TO_FOLDER" --dry-run
-```
+The application will generate reports in the reports directory.
 
 Example output:
 
-```text
-[DRY-RUN] photo.jpg -> images/
-[DRY-RUN] document.pdf -> documents/
-```
+reports/
 
-## Configuration
+- report_timestamp.txt
+- report_timestamp.json
+- report_timestamp.html
 
-File categories can be customized in:
+---
 
-```text
-config/config.json
-```
+## Testing
 
-Example:
+Syntax validation:
 
-```json
-{
-    "file_types": {
-        "images": [".jpg", ".png"],
-        "documents": [".pdf", ".txt"]
-    }
-}
-```
+python -m py_compile src/main.py
 
-## Example Result
+python -m py_compile src/utils/report.py
 
-Before:
+The application has been tested with:
 
-```text
-Test_Files/
+- sample folders
+- multiple file categories
+- report generation
+- HTML dashboard output
 
-photo.jpg
-report.pdf
-music.mp3
-```
+---
 
-After:
+## Roadmap
 
-```text
-Test_Files/
+### Version 1.6.0
 
-images/
- └── photo.jpg
+Completed:
 
-documents/
- └── report.pdf
+- HTML dashboard
+- embedded styling
+- report comparison tables
+- improved size formatting
 
-audio/
- └── music.mp3
-```
+### Version 1.7.0
 
-## Development Goals
+Planned:
 
-Future improvements:
+- charts
+- data visualization
+- report analytics
 
-* Logging system
-* File analysis reports
-* Graphical user interface
-* Automated testing
-* Advanced duplicate detection
+### Version 2.0.0
 
-## Author
+Planned:
 
-Python Automation Developer
+- GUI dashboard
+- interactive interface
+- advanced file management
 
-Focused on building practical automation tools, data processing solutions, and productivity software.
+---
+
+## Project Goals
+
+The goal of Smart File Organizer Pro is to provide a maintainable automation tool with:
+
+- clean architecture
+- modular design
+- extensible reporting
+- future GUI compatibility
+
+---
+
+## Development Notes
+
+Technologies used:
+
+- Python
+- Object-oriented programming
+- Modular architecture
+- Git version control
+
+The project structure allows new features to be added without major changes to existing components.
+
+---
+
+## License
+
+This project is currently intended for educational and portfolio purposes.
