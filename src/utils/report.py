@@ -15,19 +15,6 @@ class ReportData:
     Supports:
     - post-organization statistics (existing behavior)
     - pre-scan analysis results (ScannerData, optional)
-
-    Attributes
-    ----------
-    source_folder : str
-        The folder that was processed.
-    stats : Dict[str, int]
-        Organizer statistics after file movement.
-    total_files : int
-        Total number of processed files (post-organization).
-    timestamp : str
-        Timestamp of when the report was generated.
-    scan_data : Optional[ScannerData]
-        Pre-scan analysis results (v1.3.0+). Optional for backward compatibility.
     """
 
     def __init__(
@@ -53,20 +40,18 @@ class ReportFormatter:
     """
     Formatter class responsible for converting ReportData into various output formats.
 
-    Currently supported:
-    - TXT (plain text)
-    - JSON (v1.4.0)
-
-    Future formats:
+    Supported:
+    - TXT
+    - JSON
     - HTML (v1.5.0)
-    - GUI display (v2.0.0)
     """
+
+    # -------------------------
+    # TXT FORMATTER
+    # -------------------------
 
     @staticmethod
     def _format_pre_scan_section(report: ReportData) -> str:
-        """
-        Format the pre-scan (ScannerData) section if available for TXT output.
-        """
         if report.scan_data is None:
             return ""
 
@@ -97,9 +82,6 @@ class ReportFormatter:
 
     @staticmethod
     def to_text(report: ReportData) -> str:
-        """
-        Convert ReportData into a human-readable text report.
-        """
         logger.info("Formatting report as TXT")
 
         lines = [
@@ -124,21 +106,12 @@ class ReportFormatter:
 
         return "\n".join(lines)
 
+    # -------------------------
+    # JSON FORMATTER
+    # -------------------------
+
     @staticmethod
     def to_json(report: ReportData) -> Dict[str, Any]:
-        """
-        Convert ReportData into a JSON-serializable dictionary.
-
-        This structure is suitable for:
-        - saving as .json
-        - feeding into GUI
-        - future HTML dashboards.
-
-        Returns
-        -------
-        Dict[str, Any]
-            JSON-serializable representation of the report.
-        """
         logger.info("Formatting report as JSON")
 
         data: Dict[str, Any] = {
@@ -168,15 +141,92 @@ class ReportFormatter:
 
         return data
 
+    # -------------------------
+    # HTML FORMATTER (v1.5.0)
+    # -------------------------
+
+    @staticmethod
+    def to_html(report: ReportData) -> str:
+        """
+        Convert ReportData into an HTML report string.
+        """
+        logger.info("Formatting report as HTML")
+
+        # Pre-scan HTML
+        pre_scan_html = ""
+        if report.scan_data is not None:
+            sd = report.scan_data
+
+            # Category distribution table
+            category_rows = "".join(
+                f"<tr><td>{cat}</td><td>{count}</td></tr>"
+                for cat, count in sd.category_distribution.items()
+            )
+
+            # Large files list
+            large_files_html = ""
+            if sd.large_files:
+                large_files_html = "<ul>" + "".join(
+                    f"<li>{entry['path']} ({entry['size_bytes']} bytes, {entry['category']})</li>"
+                    for entry in sd.large_files
+                ) + "</ul>"
+
+            pre_scan_html = f"""
+            <h2>Pre-scan summary</h2>
+            <table border="1" cellpadding="4" cellspacing="0">
+                <tr><th>Total files</th><td>{sd.total_files}</td></tr>
+                <tr><th>Total size</th><td>{sd.total_size_bytes} bytes</td></tr>
+            </table>
+
+            <h3>Category distribution</h3>
+            <table border="1" cellpadding="4" cellspacing="0">
+                <tr><th>Category</th><th>Count</th></tr>
+                {category_rows}
+            </table>
+
+            <h3>Large files</h3>
+            {large_files_html}
+            """
+
+        # Post-organization HTML
+        post_rows = "".join(
+            f"<tr><td>{cat}</td><td>{count}</td></tr>"
+            for cat, count in report.stats.items()
+        )
+
+        post_html = f"""
+        <h2>Post-organization summary</h2>
+        <table border="1" cellpadding="4" cellspacing="0">
+            <tr><th>Category</th><th>Count</th></tr>
+            {post_rows}
+        </table>
+        <p><b>Total files processed:</b> {report.total_files}</p>
+        """
+
+        # Final HTML document
+        html = f"""
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Smart File Organizer Pro - Report</title>
+        </head>
+        <body>
+            <h1>Smart File Organizer Pro - Report</h1>
+            <p><b>Source folder:</b> {report.source_folder}</p>
+            <p><b>Generated at:</b> {report.timestamp}</p>
+
+            {pre_scan_html}
+            {post_html}
+        </body>
+        </html>
+        """
+
+        return html.strip()
+
 
 class ReportWriter:
     """
     Writer class responsible for saving reports to disk.
-
-    Attributes
-    ----------
-    output_dir : Path
-        Directory where reports will be saved.
     """
 
     def __init__(self, output_dir: str = "reports"):
@@ -184,22 +234,11 @@ class ReportWriter:
         self._ensure_output_directory()
 
     def _ensure_output_directory(self) -> None:
-        """
-        Ensure that the output directory exists.
-        """
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True, exist_ok=True)
             logger.warning(f"Created missing report directory: {self.output_dir}")
 
     def save_text_report(self, text: str) -> Path:
-        """
-        Save a text report to the output directory.
-
-        Returns
-        -------
-        Path
-            Path to the saved report file.
-        """
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         file_path = self.output_dir / f"report_{timestamp}.txt"
 
@@ -215,19 +254,6 @@ class ReportWriter:
             raise
 
     def save_json_report(self, data: Dict[str, Any]) -> Path:
-        """
-        Save a JSON report to the output directory.
-
-        Parameters
-        ----------
-        data : Dict[str, Any]
-            JSON-serializable report data.
-
-        Returns
-        -------
-        Path
-            Path to the saved JSON report file.
-        """
         import json
 
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -242,4 +268,22 @@ class ReportWriter:
 
         except Exception as error:
             logger.error(f"Failed to save JSON report: {error}")
+            raise
+
+    def save_html_report(self, html: str) -> Path:
+        """
+        Save an HTML report to the output directory.
+        """
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        file_path = self.output_dir / f"report_{timestamp}.html"
+
+        try:
+            with file_path.open("w", encoding="utf-8") as f:
+                f.write(html)
+
+            logger.info(f"HTML report saved successfully: {file_path}")
+            return file_path
+
+        except Exception as error:
+            logger.error(f"Failed to save HTML report: {error}")
             raise

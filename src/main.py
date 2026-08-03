@@ -51,7 +51,7 @@ def main() -> None:
     logger.info(f"Received folder argument: {folder_path}")
     logger.info(f"Dry-run mode: {dry_run}")
 
-    print("Smart File Organizer Pro v1.4.0")
+    print("Smart File Organizer Pro v1.5.0")
     print("--------------------------------")
 
     # Load configuration
@@ -96,9 +96,9 @@ def main() -> None:
 
     logger.info(f"Post-organization statistics: {stats}")
 
-    # --- Report generation (TXT + JSON) ---
+    # --- Report generation (TXT + JSON + HTML) ---
     try:
-        logger.info("Generating reports (TXT + JSON)")
+        logger.info("Generating reports (TXT + JSON + HTML)")
 
         report = ReportData(
             source_folder=str(folder_path),
@@ -116,11 +116,17 @@ def main() -> None:
         json_report = ReportFormatter.to_json(report)
         saved_json = writer.save_json_report(json_report)
 
+        # HTML report
+        html_report = ReportFormatter.to_html(report)
+        saved_html = writer.save_html_report(html_report)
+
         logger.info(f"TXT report saved: {saved_txt}")
         logger.info(f"JSON report saved: {saved_json}")
+        logger.info(f"HTML report saved: {saved_html}")
 
         print(f"\nTXT report saved to: {saved_txt}")
         print(f"JSON report saved to: {saved_json}")
+        print(f"HTML report saved to: {saved_html}")
 
     except Exception as error:
         logger.error(f"Failed to generate reports: {error}")
