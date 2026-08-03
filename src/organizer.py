@@ -2,6 +2,10 @@ from pathlib import Path
 import shutil
 from typing import Dict, Any, Union
 
+from utils.logger import get_logger
+
+logger = get_logger("Organizer")
+
 
 def get_category(extension: str, file_types: Dict[str, list]) -> str:
     """
@@ -10,18 +14,21 @@ def get_category(extension: str, file_types: Dict[str, list]) -> str:
     Parameters
     ----------
     extension : str
-        The file extension (e.g., '.pdf', '.jpg').
+        File extension (e.g., '.pdf').
     file_types : Dict[str, list]
-        Mapping of categories to lists of extensions from the configuration.
+        Mapping of categories to lists of extensions.
 
     Returns
     -------
     str
-        The category name if found, otherwise 'others'.
+        Category name or 'others' if unknown.
     """
     for category, extensions in file_types.items():
         if extension in extensions:
+            logger.info(f"Extension '{extension}' categorized as '{category}'")
             return category
+
+    logger.warning(f"Unknown extension '{extension}' categorized as 'others'")
     return "others"
 
 
@@ -29,29 +36,26 @@ def safe_move_file(source: Path, target: Path) -> Path:
     """
     Move a file to the target path safely.
 
-    If a file with the same name already exists at the target location,
-    this function will append a numeric suffix to the filename to avoid overwriting.
-
-    Example:
-        report.pdf      -> report_1.pdf
-        report_1.pdf    -> report_2.pdf
+    If a file with the same name already exists, append a numeric suffix.
 
     Parameters
     ----------
     source : Path
-        The original file path.
+        Original file path.
     target : Path
-        The desired target file path.
+        Desired target file path.
 
     Returns
     -------
     Path
-        The final target path where the file was moved.
+        Final target path where the file was moved.
     """
     if not target.exists():
         shutil.move(str(source), str(target))
+        logger.info(f"Moved file: {source.name} -> {target}")
         return target
 
+    # Duplicate handling
     stem = target.stem
     suffix = target.suffix
     parent = target.parent
@@ -64,6 +68,9 @@ def safe_move_file(source: Path, target: Path) -> Path:
         new_target = parent / f"{stem}_{counter}{suffix}"
 
     shutil.move(str(source), str(new_target))
+    logger.warning(
+        f"Duplicate detected. Renamed and moved: {source.name} -> {new_target}"
+    )
     return new_target
 
 
@@ -75,34 +82,27 @@ def organize_files(
     """
     Organize files in the given folder based on the configuration.
 
-    Files are categorized by extension, moved into corresponding subfolders,
-    and a statistics dictionary is returned.
-
     Parameters
     ----------
     source_folder : Union[str, Path]
-        Path to the folder that should be organized.
+        Folder to organize.
     config : Dict[str, Any]
-        Configuration data loaded via config_loader.load_config().
-        Expected to contain a 'file_types' dictionary.
-    dry_run : bool, optional
-        If True, no files are actually moved; actions are only simulated.
+        Configuration dictionary.
+    dry_run : bool
+        If True, simulate actions without moving files.
 
     Returns
     -------
     Dict[str, int]
-        A dictionary containing counts of files per category.
-
-    Raises
-    ------
-    FileNotFoundError
-        If the source folder does not exist.
+        Statistics of processed files per category.
     """
-
     source_path = Path(source_folder)
 
     if not source_path.exists():
+        logger.error(f"Source folder does not exist: {source_folder}")
         raise FileNotFoundError(f"Source folder does not exist: {source_folder}")
+
+    logger.info(f"Starting organization in folder: {source_path}")
 
     file_types = config.get("file_types", {})
     stats: Dict[str, int] = {category: 0 for category in file_types.keys()}
@@ -110,6 +110,7 @@ def organize_files(
 
     for item in source_path.iterdir():
         if not item.is_file():
+            logger.warning(f"Skipping non-file item: {item.name}")
             continue
 
         extension = item.suffix.lower()
@@ -121,15 +122,15 @@ def organize_files(
         target_path = target_folder / item.name
 
         if dry_run:
-            print(f"[DRY-RUN] {item.name} -> {category}/")
+            logger.info(f"[DRY-RUN] {item.name} -> {category}/")
             stats[category] += 1
             continue
 
         try:
-            final_path = safe_move_file(item, target_path)
-            print(f"Moved: {item.name} -> {final_path}")
+            safe_move_file(item, target_path)
             stats[category] += 1
         except Exception as error:
-            print(f"Failed to move {item.name}: {error}")
+            logger.error(f"Failed to move {item.name}: {error}")
 
+    logger.info(f"Organization completed. Stats: {stats}")
     return stats
